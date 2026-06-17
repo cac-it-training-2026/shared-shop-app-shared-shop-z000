@@ -1,8 +1,12 @@
 package jp.co.sss.shop.controller.login;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -10,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import jp.co.sss.shop.bean.UserBean;
+import jp.co.sss.shop.entity.User;
 import jp.co.sss.shop.form.LoginForm;
 import jp.co.sss.shop.repository.UserRepository;
 import jp.co.sss.shop.util.Constant;
@@ -33,6 +38,12 @@ public class LoginController {
 	 */
 	@Autowired
 	HttpSession session;
+
+	/**
+	 * メッセージソース
+	 */
+	@Autowired
+	MessageSource messageSource;
 
 	/**
 	 * ログイン処理
@@ -69,15 +80,57 @@ public class LoginController {
 			returnStr = "login";
 
 		} else {
-			//セッションスコープから権限を取り出す
-			Integer authority = ((UserBean) session.getAttribute("user")).getAuthority();
-			if (authority.intValue() == Constant.AUTH_CLIENT) {
-				// 一般会員ログインした場合、トップ画面表示処理にリダイレクト
-				returnStr = "redirect:/";
-			} else {
+			User user = userRepository.findByEmailAndDeleteFlag(form.getEmail(), Constant.NOT_DELETED);
 
-				// 運用管理者、もしくはシステム管理者としてログインした場合、管理者用メニュー画面表示処理にリダイレクト
-				returnStr = "redirect:/admin/menu";
+			if (user != null) {
+				if (user.getAccountLockedUntil() != null && LocalDateTime.now().isBefore(user.getAccountLockedUntil())) {
+					// アカウントがロックされている場合
+					result.addError(new FieldError(result.getObjectName(), "email",
+							messageSource.getMessage("msg.login.account.locked", null, null)));
+					session.invalidate();
+					return returnStr;
+				}
+
+				if (form.getPassword().equals(user.getPassword())) {
+					// ログイン成功
+					user.setLoginFailureCount(0);
+					user.setAccountLockedUntil(null);
+					userRepository.save(user);
+
+					UserBean userBean = new UserBean();
+					userBean.setId(user.getId());
+					userBean.setName(user.getName());
+					userBean.setAuthority(user.getAuthority());
+					session.setAttribute("user", userBean);
+
+					// セッションスコープから権限を取り出す
+					Integer authority = ((UserBean) session.getAttribute("user")).getAuthority();
+					if (authority.intValue() == Constant.AUTH_CLIENT) {
+						// 一般会員ログインした場合、トップ画面表示処理にリダイレクト
+						returnStr = "redirect:/";
+					} else {
+						// 運用管理者、もしくはシステム管理者としてログインした場合、管理者用メニュー画面表示処理にリダイレクト
+						returnStr = "redirect:/admin/menu";
+					}
+				} else {
+					// パスワードが間違っている場合
+					int failCount = user.getLoginFailureCount() + 1;
+					user.setLoginFailureCount(failCount);
+
+					if (failCount >= 5) {
+						user.setAccountLockedUntil(LocalDateTime.now().plusMinutes(30));
+					}
+					userRepository.save(user);
+
+					result.addError(new FieldError(result.getObjectName(), "password",
+							messageSource.getMessage("msg.login.email.or.password.mismatch", null, null)));
+					session.invalidate();
+				}
+			} else {
+				// ユーザーが存在しない場合
+				result.addError(new FieldError(result.getObjectName(), "email",
+						messageSource.getMessage("msg.login.email.or.password.mismatch", null, null)));
+				session.invalidate();
 			}
 		}
 		return returnStr;

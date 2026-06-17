@@ -1,6 +1,7 @@
 package jp.co.sss.shop.entity;
 
 import java.sql.Date;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -80,6 +81,18 @@ public class User {
 	 */
 	@Column(insertable = false)
 	private Date insertDate;
+
+	/**
+	 * ログイン失敗回数
+	 */
+	@Column(name = "login_failure_count", columnDefinition = "integer default 0")
+	private Integer loginFailureCount = 0;
+
+	/**
+	 * アカウントロック解除日時
+	 */
+	@Column(name = "account_locked_until")
+	private LocalDateTime accountLockedUntil;
 
 	/**
 	 * 会員IDの取得
@@ -239,5 +252,37 @@ public class User {
 	 */
 	public void setInsertDate(Date insertDate) {
 		this.insertDate = insertDate;
+	}
+
+	/**
+	 * ログイン失敗回数の取得
+	 * @return ログイン失敗回数
+	 */
+	public Integer getLoginFailureCount() {
+		return loginFailureCount;
+	}
+
+	/**
+	 * ログイン失敗回数のセット
+	 * @param loginFailureCount ログイン失敗回数
+	 */
+	public void setLoginFailureCount(Integer loginFailureCount) {
+		this.loginFailureCount = loginFailureCount;
+	}
+
+	/**
+	 * アカウントロック解除日時の取得
+	 * @return アカウントロック解除日時
+	 */
+	public LocalDateTime getAccountLockedUntil() {
+		return accountLockedUntil;
+	}
+
+	/**
+	 * アカウントロック解除日時のセット
+	 * @param accountLockedUntil アカウントロック解除日時
+	 */
+	public void setAccountLockedUntil(LocalDateTime accountLockedUntil) {
+		this.accountLockedUntil = accountLockedUntil;
 	}
 }

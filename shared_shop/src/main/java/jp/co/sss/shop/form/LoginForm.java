@@ -7,14 +7,11 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-import jp.co.sss.shop.annotation.LoginCheck;
-
 /**
  * ログインのフォーム
  *
  * @author SystemShared
  */
-@LoginCheck
 public class LoginForm implements Serializable {
 
 	/**
