@@ -1,5 +1,7 @@
 package jp.co.sss.shop.repository;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -42,4 +44,11 @@ public interface ItemRepository extends JpaRepository<Item, Integer> {
 	 * @return 商品エンティティ
 	 */
 	public Item findByNameAndDeleteFlag(String name, int notDeleted);
+
+	/**
+	 * 商品情報を売れ筋順（注文数が多い順）に取得
+	 * @return 商品エンティティのリスト
+	 */
+	@Query("SELECT i FROM Item i LEFT JOIN i.orderItemList oi WHERE i.deleteFlag = 0 GROUP BY i.id ORDER BY COUNT(oi) DESC, i.id DESC")
+	List<Item> findAllByOrderByOrderItemCountDesc();
 }

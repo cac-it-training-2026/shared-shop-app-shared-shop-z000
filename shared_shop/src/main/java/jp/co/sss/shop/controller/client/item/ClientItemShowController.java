@@ -43,17 +43,17 @@ public class ClientItemShowController {
 	@RequestMapping(path = "/", method = { RequestMethod.GET, RequestMethod.POST })
 	public String index(Model model) {
 
-		/*TODO 現在は全件表示を行っている
-		 * これを売れ筋（注文回数が多い順）に改修する*/
-
-		// 注文情報の商品情報を全件表示
-		List<Item> itemList = itemRepository.findAll();
+		// 商品情報を売れ筋順（注文数が多い順）に取得
+		List<Item> itemList = itemRepository.findAllByOrderByOrderItemCountDesc();
 
 		// エンティティ内の検索結果をJavaBeansにコピー
 		List<ItemBean> itemBeanList = beanTools.copyEntityListToItemBeanList(itemList);
 
 		// 商品情報をViewへ渡す
 		model.addAttribute("items", itemBeanList);
+
+		// 表示形式（売れ筋順）をViewへ渡す
+		model.addAttribute("sortType", Constant.SORT_BY_HOTSELL);
 
 		return "index";
 	}

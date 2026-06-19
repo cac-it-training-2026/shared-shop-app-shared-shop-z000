@@ -54,4 +54,9 @@ public class Constant {
 	/** 権限の値(一般会員) */
 	public static final int AUTH_CLIENT = 2;
 
+	/** 並び順の値(新着順) */
+	public static final int SORT_BY_LATEST = 1;
+	/** 並び順の値(売れ筋順) */
+	public static final int SORT_BY_HOTSELL = 2;
+
 }
